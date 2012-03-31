@@ -1,0 +1,119 @@
+rails g scaffold Comic user_id:integer image:string caption:string lols_no:integer res_no:integer lames_no:integer reports_no:integer
+rails g scaffold Comment user_id:integer comic_id:integer content:text likes_no:integer
+rails g scaffold Lol user_id:integer comic_id:integer
+rails g scaffold Lame user_id:integer comic_id:integer
+rails g scaffold Repost user_id:integer comic_id:integer
+rails g scaffold Favourite  user_id:integer comic_id:integer
+rails g scaffold Notification user_id:integer person_id:integer type_no:integer comic_id:integer
+rails g scaffold Report user_id:integer comic_id:integer
+====
+user (Facebook only)... lols_no ...res_no ... lames_no .. comics_no.. favourites_no reports_no:integer
+
+===========
+[DEVISE] Devise.case_insensitive_keys is false which is no longer supported. Recent Devise versions automatically downcase the e-mail before saving it to the database but your app isn't using this feature. You can solve this issue by either:
+
+1) Setting config.case_insensitive_keys = [:email] in your Devise initializer and running a migration that will downcase all emails already in the database;
+
+2) Setting config.case_insensitive_keys = [] (so nothing will be downcased) and making sure you are not using Devise :validatable (since validatable assumes caseinsensitivity)
+
+
+[DEVISE] Devise.use_salt_as_remember_token is false which is no longer supported. Devise now only uses the salt as remember token and the remember_token column can be removed from your models.
+
+
+[DEVISE] Devise.reset_password_within is nil. Please set this value to an interval (for example, 6.hours) and add a reset_password_sent_at field to your Devise models (if they don't have one already).
+
+      create  config/initializers/devise.rb
+      create  config/locales/devise.en.yml
+===============================================================================
+
+Some setup you must do manually if you haven't yet:
+
+  1. Ensure you have defined default url options in your environments files. Here 
+     is an example of default_url_options appropriate for a development environment 
+     in config/environments/development.rb:
+
+       config.action_mailer.default_url_options = { :host => 'localhost:3000' }
+
+     In production, :host should be set to the actual host of your application.
+
+  2. Ensure you have defined root_url to *something* in your config/routes.rb.
+     For example:
+
+       root :to => "home#index"
+
+  3. Ensure you have flash messages in app/views/layouts/application.html.erb.
+     For example:
+
+       <p class="notice"><%= notice %></p>
+       <p class="alert"><%= alert %></p>
+
+  4. If you are deploying Rails 3.1 on Heroku, you may want to set:
+
+       config.assets.initialize_on_precompile = false
+
+     On config/application.rb forcing your application to not access the DB
+     or load models when precompiling your assets.
+==================
+Notifications :
+=======
+http://stackoverflow.com/questions/5616614/how-would-you-create-a-notification-system-like-on-so-or-facebook-in-ror
+http://guides.rubyonrails.org/active_record_validations_callbacks.html#observers
+
+So the general gist:
+
+1) Notifications would be a polymorphic association in that comments can have many notifications, users can have many notifications, a 'following' can have many notifications etc.
+
+2) You can have Model Observers, where you can "observe" certain events, such as when a new comment is created. This is would be your triggers.
+
+In terms of routing, you really don't need to do anything out of the norm. The only routing you may have is a domain.com/notifications where it shows all the notifications.
+
+Notification table might look like:
+
+sender_id: integer, receiver_id: integer, notifiable_id: integer, notifiable_type: string
+
+link|improve this answer
+edited Apr 11 '11 at 4:24
+
+answered Apr 11 '11 at 4:17
+
+Mike Lewis
+14.1k2928
+what exactly would sender and receiver be? they would be resources of their own? – Justin Meltzer Apr 11 '11 at 4:34
+sender and receiver would both be foreign keys for users. – Mike Lewis Apr 11 '11 at 4:35
+got it, are there any more in depth resources for learning the ins and outs of observers? – Justin Meltzer Apr 11 '11 at 4:41
+1	  
+Truth be told, there really isn't much to it. That page I linked to and this: api.rubyonrails.org/classes/ActiveRecord/Observer.html is really all you need. – Mike Lewis Apr 11 '11 at 4:43
+1	  
+I came across this link: mickeyben.com/2010/05/23/… – neology Jul 7 '11 at 6:14
+
+
+=================
+attr_accessible  :user_id     , :person_id     , :type     , :comic_id
+     
+  belongs_to :user
+  belongs_to :person , :class_name => "User" 
+  belongs_to :comic
+
+add_index("notifications", "user_id")
+    add_index("notifications", "person_id")
+   add_index("notifications", "comic_id")
+    add_index("notifications", "created_at")
+
+
+
+<% @notifications.each do |notification| %>
+  <%=  notification.type_no   %>
+  <%=  notification.count %>
+
+
+<% @notifications.each do |notification| %>
+  <tr>
+    <td><%= notification.user_id %></td>
+    <td><%= notification.person_id %></td>
+    <td><%= notification.type_no %></td>
+    <td><%= notification.comic_id %> </td>
+    <td><%= link_to 'Show', notification %></td>
+    <td><%= link_to 'Edit', edit_notification_path(notification) %></td>
+    <td><%= link_to 'Destroy', notification, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
